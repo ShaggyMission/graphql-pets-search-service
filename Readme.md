@@ -34,6 +34,7 @@ The **Pet Search GraphQL Service** is an advanced microservice in the Shaggy Mis
 
 - **Runtime**: Node.js with Express.js framework
 - **GraphQL Server**: Apollo Server Express for GraphQL API
+- **CORS Support**: Cross-Origin Resource Sharing enabled for web integration
 - **Database**: MongoDB Atlas with Mongoose ODM
 - **Search Implementation**: MongoDB regex-based case-insensitive search
 - **Architecture**: Clean separation with Repository and Service patterns
@@ -135,7 +136,7 @@ query {
 ## 📡 API Access
 
 ### GraphQL Playground
-**`GET http://localhost:3011/graphql`**
+**`GET http://localhost:3011/graphql/search/pets`**
 - Interactive GraphQL playground for testing queries
 - Schema exploration and documentation
 - Real-time query execution and results
@@ -232,19 +233,15 @@ class PetService {
 }
 ```
 
-### GraphQL Resolvers
-```javascript
-const resolvers = {
-  Query: {
-    getPetsByBreed: async (_, { breed }) => {
-      return await PetService.getPetsByBreed(breed);
-    },
-    getPetsByLocation: async (_, { location }) => {
-      return await PetService.getPetsByLocation(location);
-    }
-  }
-};
-```
+## 🔒 Data Security & Validation
+
+- **Input Validation**: GraphQL schema validation for all query parameters
+- **Required Fields**: Breed and location parameters are mandatory
+- **Error Handling**: Comprehensive error management with clear messages
+- **Data Sanitization**: MongoDB injection protection through Mongoose
+- **Type Safety**: GraphQL type system prevents invalid data requests
+- **Connection Security**: Secure MongoDB connection with credentials
+- **CORS Configuration**: Proper cross-origin access control for web applications
 
 ## 🗃️ Database Schema
 
@@ -267,87 +264,38 @@ const resolvers = {
 ### Search Indexes (Recommended)
 ```javascript
 // Recommended indexes for optimal search performance
-db.pets.createIndex({ "breed": "text" })
-db.pets.createIndex({ "location": "text" })
-db.pets.createIndex({ "breed": 1, "location": 1 })
+### GraphQL Resolvers
+```javascript
+const resolvers = {
+  Query: {
+    getPetsByBreed: async (_, { breed }) => {
+      return await PetService.getPetsByBreed(breed);
+    },
+    getPetsByLocation: async (_, { location }) => {
+      return await PetService.getPetsByLocation(location);
+    }
+  }
+};
 ```
 
-## 🔧 Development
-
-### Project Structure
+### Apollo Server Configuration
+```javascript
+async function startServer() {
+  const app = express();
+  
+  app.use(cors());
+  
+  const server = new ApolloServer({ typeDefs, resolvers });
+  
+  await server.start();
+  server.applyMiddleware({ app, path: '/graphql/search/pets' });
+  
+  const PORT = process.env.PORT || 3011;
+  app.listen(PORT, () =>
+    console.log(`GraphQL server ready at http://localhost:${PORT}${server.graphqlPath}`)
+  );
+}
 ```
-├── config/
-│   └── db.js                    # MongoDB connection setup
-├── models/
-│   └── Pet.js                   # Mongoose Pet schema
-├── repositories/
-│   └── PetRepository.js         # Database access layer
-├── services/
-│   └── PetService.js            # Business logic layer
-├── graphql/
-│   ├── schema.js                # GraphQL type definitions
-│   └── resolvers.js             # GraphQL query resolvers
-└── app.js                       # Apollo Server setup
-```
-
-### Running the Service
-```bash
-# Start the GraphQL server
-npm start
-
-# The service will be available at:
-# http://localhost:3011/graphql (GraphQL Playground)
-```
-
-### Testing Queries
-
-**Using GraphQL Playground:**
-1. Navigate to `http://localhost:3011/graphql`
-2. Use the interactive editor to write queries
-3. Access schema documentation in the sidebar
-4. Test with different breeds and locations
-
-**Using curl:**
-```bash
-# Search by breed
-curl -X POST http://localhost:3011/graphql \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "query { getPetsByBreed(breed: \"labrador\") { name breed location } }"
-  }'
-
-# Search by location
-curl -X POST http://localhost:3011/graphql \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "query { getPetsByLocation(location: \"new york\") { name breed age healthStatus } }"
-  }'
-```
-
-## 🔄 Search Workflows
-
-### Adoption Discovery Process
-Potential adopters can search for specific breeds they're interested in, find pets in their local area, customize data fetching to get relevant information, and combine results with other services for complete adoption workflows.
-
-### Rescue Organization Management
-Staff can search pets by location for transport planning, find specific breeds for specialized care programs, generate reports with targeted data queries, and integrate with administrative dashboards.
-
-### Mobile App Integration
-Mobile applications can request minimal data for list views, fetch complete profiles for detail screens, implement progressive data loading, and optimize network usage with precise queries.
-
-## ⚡ Performance Considerations
-
-### Database Optimization
-- **Index Strategy**: Text indexes on breed and location fields for fast searches
-- **Regex Performance**: Case-insensitive regex queries optimized for MongoDB
-- **Connection Pooling**: Efficient MongoDB connection management
-- **Query Optimization**: Minimal data fetching based on GraphQL field selection
-
-### GraphQL Benefits
-- **Reduced Over-fetching**: Only requested data is retrieved and transmitted
-- **Single Request**: Multiple data requirements in one query
-- **Caching Opportunities**: GraphQL query caching and memoization
-- **Network Efficiency**: Optimized payload sizes for mobile applications
 
 ## 🔒 Data Security & Validation
 
