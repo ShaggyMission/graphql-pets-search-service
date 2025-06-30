@@ -11,7 +11,7 @@ async function startServer() {
   const server = new ApolloServer({ typeDefs, resolvers });
 
   await server.start();
-  server.applyMiddleware({ app });
+  server.applyMiddleware({ app, path: '/graphql/search/pets' });
 
   const PORT = process.env.PORT || 3011;
   app.listen(PORT, () =>
@@ -20,3 +20,4 @@ async function startServer() {
 }
 
 startServer();
+
