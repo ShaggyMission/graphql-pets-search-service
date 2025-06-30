@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');  
 const { ApolloServer } = require('apollo-server-express');
 require('./config/db');
 
@@ -7,6 +8,8 @@ const resolvers = require('./graphql/resolvers');
 
 async function startServer() {
   const app = express();
+
+  app.use(cors());
 
   const server = new ApolloServer({ typeDefs, resolvers });
 
@@ -20,4 +23,3 @@ async function startServer() {
 }
 
 startServer();
-
